@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">MinimalShoppingApp</string>
+    <string name="app_Home">Home</string>
+    
+    <!-- Navigation -->
+    <string name="action_search">Search</string>
+    <string name="action_cart">View Cart</string>
+    <string name="action_back">Go Back</string>
+    
+    <!-- Home Screen -->
+    <string name="search_hint">Search products…</string>
+    <string name="category_all">All</string>
+    <string name="category_electronics">Electronics</string>
+    <string name="category_accessories">Accessories</string>
+    <string name="category_lifestyle">Lifestyle</string>
+    <string name="todays_highlights">Today\'s Highlights</string>
+    <string name="browse_collection">Browse Collection</string>
+    <string name="see_all">See All</string>
+    
+    <!-- Product Details -->
+    <string name="product_description">Product Description</string>
+    <string name="key_features">Key Features</string>
+    <string name="feature_quality">• Premium quality materials</string>
+    <string name="feature_design">• Minimalist design</string>
+    <string name="feature_warranty">• 1 year warranty</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="view_cart">View Cart</string>
+    <string name="added_to_cart">Added to cart</string>
+    
+    <!-- Cart -->
+    <string name="your_cart">Your Cart</string>
+    <string name="checkout">Checkout</string>
+    <string name="empty_cart">Your cart is empty</string>
+    <string name="cart_total">Total: $%1$s</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Discover Quality Products</string>
+    <string name="onboarding_desc_1">Browse our curated collection of premium products designed for your lifestyle.</string>
+    <string name="onboarding_title_2">Simple Shopping Experience</string>
+    <string name="onboarding_desc_2">Our minimal design makes shopping easy and enjoyable with quick navigation and checkout.</string>
+    <string name="onboarding_title_3">Fast &amp; Secure Delivery</string>
+    <string name="onboarding_desc_3">Get your orders delivered to your doorstep with our fast and secure shipping options.</string>
+    <string name="skip">Skip</string>
+    <string name="next">Next</string>
+    <string name="get_started">Get Started</string>
+</resources>
