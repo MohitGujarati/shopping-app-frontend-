@@ -24,8 +24,10 @@ import com.example.minimalshoppingapp.R
 import com.example.minimalshoppingapp.model.shopingitem_model
 import com.example.minimalshoppingapp.recyclerViews.adapters.home_recyclerviewAdapter
 import com.example.minimalshoppingapp.utlis.CartManager
+import com.example.minimalshoppingapp.utlis.NotificationUtils
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import java.util.Random
 
 class Home : AppCompatActivity() {
     
@@ -42,10 +44,36 @@ class Home : AppCompatActivity() {
     private var allProducts = ArrayList<shopingitem_model>()
     private var filteredProducts = ArrayList<shopingitem_model>()
     
+    // Track if we've already sent a cart abandonment notification during this session
+    private var hasShownCartAbandonmentNotification = false
+    
+    // Handler for periodic notifications
+    private val handler = Handler(Looper.getMainLooper())
+    private val randomProductNotifier = object : Runnable {
+        override fun run() {
+            checkForRandomProductNotification()
+            // Schedule next check in 30-60 seconds (for demo purposes)
+            handler.postDelayed(this, (30000 + Random().nextInt(30000)).toLong())
+        }
+    }
+    
+    // Handler for cart reminders
+    private val cartReminderHandler = Handler(Looper.getMainLooper())
+    private val cartReminderRunnable = object : Runnable {
+        override fun run() {
+            checkForCartReminders()
+            // Schedule next check in 2-3 minutes (for demo purposes)
+            cartReminderHandler.postDelayed(this, (120000 + Random().nextInt(60000)).toLong())
+        }
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_home)
+
+        // Initialize notification channels
+        NotificationUtils.createNotificationChannels(this)
 
         // Initialize views
         initViews()
@@ -73,10 +101,79 @@ class Home : AppCompatActivity() {
             setupRecyclerViews()
             
             hideLoading()
+            
+            // Start notification demo handlers
+            startNotificationDemos()
         }, 500)
         
         // Set up "See All" buttons
         setupSeeAllButtons()
+        
+        // Reset notification flag when app starts
+        hasShownCartAbandonmentNotification = false
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        updateCartBadge()
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        // Pause notification demos when app is not visible
+        handler.removeCallbacks(randomProductNotifier)
+        cartReminderHandler.removeCallbacks(cartReminderRunnable)
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        // When the app is stopped (goes to background or is closed),
+        // check if there are items in cart and show a notification
+        checkCartAndSendAbandonmentNotification()
+    }
+
+    /**
+     * Checks if there are items in the cart, and if so, sends a cart abandonment notification
+     * This is called when the app is being stopped (put in background or closed)
+     */
+    private fun checkCartAndSendAbandonmentNotification() {
+        // Only show the notification once per session
+        if (hasShownCartAbandonmentNotification) return
+        
+        val cartCount = CartManager.getCartItemCount()
+        val cartTotal = CartManager.getCartTotal()
+        
+        // If cart has items, send a notification
+        if (cartCount > 0) {
+            NotificationUtils.showCartAbandonmentNotification(this, cartCount, cartTotal)
+            hasShownCartAbandonmentNotification = true
+        }
+    }
+    
+    private fun startNotificationDemos() {
+        // Start random product notifications
+        handler.postDelayed(randomProductNotifier, 15000) // First notification after 15 seconds
+        
+        // Start cart reminder notifications if there are items in cart
+        cartReminderHandler.postDelayed(cartReminderRunnable, 30000) // First check after 30 seconds
+    }
+    
+    private fun checkForRandomProductNotification() {
+        // Only send notifications when we have products
+        if (allProducts.isNotEmpty()) {
+            // Randomly select a product to notify about (just for demo)
+            val randomProduct = allProducts[Random().nextInt(allProducts.size)]
+            NotificationUtils.showProductNotification(this, randomProduct)
+        }
+    }
+    
+    private fun checkForCartReminders() {
+        // Check if there are items in the cart
+        val cartCount = CartManager.getCartItemCount()
+        if (cartCount > 0) {
+            // Send a reminder notification
+            NotificationUtils.showCartReminderNotification(this, cartCount)
+        }
     }
     
     private fun initViews() {
@@ -108,11 +205,6 @@ class Home : AppCompatActivity() {
         // Add animation to recycler views
         horizontalRecyclerView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
         gridRecyclerView.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in))
-    }
-    
-    override fun onResume() {
-        super.onResume()
-        updateCartBadge()
     }
     
     private fun updateCartBadge() {

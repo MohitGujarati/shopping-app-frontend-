@@ -2,7 +2,10 @@ package com.example.minimalshoppingapp.components
 
 import android.animation.ObjectAnimator
 import android.animation.PropertyValuesHolder
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,7 +18,10 @@ import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.minimalshoppingapp.R
+import com.example.minimalshoppingapp.utlis.NotificationUtils
 
 class SplashActivity : AppCompatActivity() {
 
@@ -23,11 +29,16 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var title: TextView
     private lateinit var subtitle: TextView
     private lateinit var progressBar: ProgressBar
+    
+    private val PERMISSION_REQUEST_CODE = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_splash)
+
+        // Initialize notification channels
+        NotificationUtils.createNotificationChannels(this)
 
         // Initialize views
         logo = findViewById(R.id.splash_logo)
@@ -35,6 +46,49 @@ class SplashActivity : AppCompatActivity() {
         subtitle = findViewById(R.id.splash_subtitle)
         progressBar = findViewById(R.id.splash_progress)
 
+        // Check for notification permission on Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkNotificationPermission()
+        } else {
+            // Start animations directly on older Android versions
+            startAnimationsWithDelay()
+        }
+    }
+    
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // Request the permission
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    PERMISSION_REQUEST_CODE
+                )
+            } else {
+                // Permission already granted
+                startAnimationsWithDelay()
+            }
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            // Continue with animations regardless of permission result
+            startAnimationsWithDelay()
+        }
+    }
+    
+    private fun startAnimationsWithDelay() {
         // Start animations with slight delay
         Handler(Looper.getMainLooper()).postDelayed({
             startAnimations()

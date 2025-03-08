@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide
 import com.example.minimalshoppingapp.R
 import com.example.minimalshoppingapp.model.shopingitem_model
 import com.example.minimalshoppingapp.utlis.CartManager
+import com.example.minimalshoppingapp.utlis.NotificationUtils
 
 class DetailActivity : AppCompatActivity() {
 
@@ -24,11 +25,19 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var addToCartButton: Button
     private lateinit var viewCartButton: Button
     private lateinit var backButton: ImageView
+    
+    private lateinit var currentItem: shopingitem_model
+    
+    // Track if we've already sent a cart abandonment notification during this session
+    private var hasShownCartAbandonmentNotification = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_detail)
+
+        // Initialize notification channels
+        NotificationUtils.createNotificationChannels(this)
 
         // Initialize views
         detailImage = findViewById(R.id.detail_image)
@@ -63,7 +72,7 @@ class DetailActivity : AppCompatActivity() {
             .into(detailImage)
 
         // Create shopping item model from intent data
-        val item = shopingitem_model(
+        currentItem = shopingitem_model(
             title = title,
             price = price,
             description = description,
@@ -75,12 +84,40 @@ class DetailActivity : AppCompatActivity() {
 
         // Set click listener for Add to Cart button
         addToCartButton.setOnClickListener {
-            addToCartWithAnimation(item)
+            addToCartWithAnimation(currentItem)
         }
 
         // Set click listener for View Cart button
         viewCartButton.setOnClickListener {
             navigateToCart()
+        }
+        
+        // Reset notification flag when activity starts
+        hasShownCartAbandonmentNotification = false
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        // When the activity is stopped (goes to background or is closed),
+        // check if there are items in cart and show a notification
+        checkCartAndSendAbandonmentNotification()
+    }
+
+    /**
+     * Checks if there are items in the cart, and if so, sends a cart abandonment notification
+     * This is called when the activity is being stopped (put in background or closed)
+     */
+    private fun checkCartAndSendAbandonmentNotification() {
+        // Only show the notification once per session
+        if (hasShownCartAbandonmentNotification) return
+        
+        val cartCount = CartManager.getCartItemCount()
+        val cartTotal = CartManager.getCartTotal()
+        
+        // If cart has items, send a notification
+        if (cartCount > 0) {
+            NotificationUtils.showCartAbandonmentNotification(this, cartCount, cartTotal)
+            hasShownCartAbandonmentNotification = true
         }
     }
     
@@ -126,6 +163,14 @@ class DetailActivity : AppCompatActivity() {
         val successToast = Toast.makeText(this, "Added to cart", Toast.LENGTH_SHORT)
         successToast.view?.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
         successToast.show()
+        
+        // Show a notification when the first item is added to cart
+        // or when we reach certain milestones (for demo purposes)
+        val cartCount = CartManager.getCartItemCount()
+        if (cartCount == 1 || cartCount % 5 == 0) {
+            // Send a notification about the item added to cart
+            NotificationUtils.showProductNotification(this, item)
+        }
     }
     
     private fun navigateToCart() {
